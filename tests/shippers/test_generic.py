@@ -2186,6 +2186,8 @@ def test_extract_subject_from_headers_non_bytes(hass):
         )
         is False
     )
+
+
 @pytest.mark.asyncio
 async def test_aliexpress_order_details(hass, mock_imap_aliexpress_delivered_details):
     """AliExpress processing exposes product name and image per tracking id."""

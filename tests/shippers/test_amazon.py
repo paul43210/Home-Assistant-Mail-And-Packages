@@ -1,6 +1,7 @@
 """Tests for Amazon shipper utilities."""
 
 import datetime
+import email
 import re
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -29,6 +30,7 @@ from custom_components.mail_and_packages.utils.amazon import (
     amazon_date_regex,
     amazon_date_search,
     amazon_email_addresses,
+    get_email_body,
     parse_amazon_arrival_date,
 )
 from custom_components.mail_and_packages.utils.cache import EmailCache
@@ -1504,3 +1506,26 @@ async def test_amazon_packages_order_details(hass):
     assert details["702-4925201-8953856"]["image"].startswith(
         "https://m.media-amazon.com/images/I/"
     )
+
+
+@pytest.mark.asyncio
+async def test_parse_amazon_arrival_date_bare_weekday(hass):
+    """Bare-weekday arrival phrases resolve to the next matching weekday.
+
+    Regression test for the 2026 Amazon.ca template ("Arriving Monday", no
+    colon or explicit date) using a sanitized real email; the shipped email
+    arrives mid-week and the package is due the following Monday.
+    """
+    raw = await hass.async_add_executor_job(
+        Path("tests/test_emails/amazon_arriving_weekday.eml").read_bytes
+    )
+    msg = email.message_from_bytes(raw)
+    body = get_email_body(msg)
+
+    assert "Arriving Monday" in body
+    assert amazon_date_regex(body) == "Monday"
+
+    # Email sent Wednesday 2026-07-15; "Arriving Monday" means 2026-07-20.
+    email_date = datetime.date(2026, 7, 15)
+    result = await parse_amazon_arrival_date(hass, body, email_date)
+    assert result == datetime.date(2026, 7, 20)

@@ -40,9 +40,9 @@ class GenericBatchMixin:
                 else sensor_res.get(ATTR_TRACKING)
             )
             for key, value in list(sensor_res.items()):
-                if key.endswith(
-                    ("_carrier_tracking", "_order_details")
-                ) and isinstance(res.get(key), dict):
+                if key.endswith(("_carrier_tracking", "_order_details")) and isinstance(
+                    res.get(key), dict
+                ):
                     sensor_res[key] = {**res[key], **value}
             res.update(sensor_res)
             # Expose per-sensor raw tracking for coordinator state management.
