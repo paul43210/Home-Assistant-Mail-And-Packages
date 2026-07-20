@@ -1,7 +1,9 @@
 """Tests for generic shipper utilities."""
 
+import email
 import re
 import threading
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -11,11 +13,13 @@ from custom_components.mail_and_packages.const import (
     ATTR_SUBJECT,
     ATTR_TRACKING,
     CONF_FORWARDING_HEADER,
+    ITEM_DETAILS_CONFIG,
     SENSOR_DATA,
 )
 from custom_components.mail_and_packages.shippers import generic
 from custom_components.mail_and_packages.shippers.generic import GenericShipper
 from custom_components.mail_and_packages.utils.cache import EmailCache
+from custom_components.mail_and_packages.utils.email import extract_item_details
 
 
 @pytest.mark.asyncio
@@ -1610,3 +1614,38 @@ def test_etsy_tracking_pattern(text, expected):
     else:
         assert match is not None
         assert match.group(1) == expected
+
+
+@pytest.mark.asyncio
+async def test_aliexpress_order_details(hass, mock_imap_aliexpress_delivered_details):
+    """AliExpress processing exposes product name and image per tracking id."""
+    shipper = GenericShipper(hass, {"image_path": "test/path/"})
+
+    result = await shipper.process(
+        mock_imap_aliexpress_delivered_details,
+        "today",
+        "aliexpress_delivered",
+    )
+    assert result[ATTR_COUNT] == 1
+    assert result[ATTR_TRACKING] == ["JY26CAA0D000551012"]
+    details = result["aliexpress_order_details"]
+    assert details["JY26CAA0D000551012"]["name"] == (
+        "Trending Nee Doh Jellyfish & Cube Sq..."
+    )
+    assert details["JY26CAA0D000551012"]["image"].startswith(
+        "https://ae-pic-a1.aliexpress-media.com/kf/"
+    )
+
+
+def test_extract_item_details_config():
+    """The AliExpress extraction config parses name and image from raw html."""
+    raw = Path("tests/test_emails/aliexpress_delivered_details.eml").read_bytes()
+    msg = email.message_from_bytes(raw)
+    details = extract_item_details(msg, ITEM_DETAILS_CONFIG["aliexpress"])
+    assert details == {
+        "name": "Trending Nee Doh Jellyfish & Cube Sq...",
+        "image": (
+            "https://ae-pic-a1.aliexpress-media.com/kf/"
+            "Sf9fbf757b4df4475b177e73ba25a2078p.jpg"
+        ),
+    }

@@ -160,6 +160,13 @@ class PackagesSensor(CoordinatorEntity, SensorEntity):
         ):
             if tracking := data.get(self._tracking_key):
                 attr[ATTR_TRACKING_NUM] = tracking
+                details_key = "_".join(self.type.split("_")[:-1]) + "_order_details"
+                if details := data.get(details_key):
+                    filtered = {
+                        num: item for num, item in details.items() if num in tracking
+                    }
+                    if filtered:
+                        attr[ATTR_ORDER_DETAILS] = filtered
 
         if "Amazon" in self._name:
             self._add_amazon_attributes(attr, data)

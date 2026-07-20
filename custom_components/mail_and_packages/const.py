@@ -1918,6 +1918,19 @@ SENSOR_NAME = 0
 SENSOR_UNIT = 1
 SENSOR_ICON = 2
 
+# Per-shipper item-details extraction (product name/image from email HTML).
+# "image" is searched against the raw text/html part; "name" group(1) is the
+# product title text node. Only shippers listed here are processed.
+ITEM_DETAILS_CONFIG = {
+    "aliexpress": {
+        "image": (
+            r"https://(?:ae-pic-[a-z0-9]+\.aliexpress-media\.com"
+            r"|ae01\.alicdn\.com)/kf/[^\"'\s]+?\.jpg"
+        ),
+        "name": r">\s*([^<>]{5,120}?\.\.\.)\s*<",
+    },
+}
+
 # For sensors with delivering and delivered statuses
 SHIPPERS = [
     "aliexpress",

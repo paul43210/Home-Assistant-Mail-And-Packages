@@ -1471,3 +1471,15 @@ def mock_imap_etsy_on_the_way(mock_imap):
     )
     mock_imap.fetch.side_effect = _generate_fetch_side_effect(email_file)
     return mock_imap
+
+
+@pytest.fixture
+def mock_imap_aliexpress_delivered_details(mock_imap):
+    """Mock IMAP search with an AliExpress delivered email incl. product details."""
+    mock_imap.select.return_value = ("OK", [b""])
+    mock_imap.uid.return_value = MagicMock(result="OK", lines=[b"1"])
+    email_file = Path("tests/test_emails/aliexpress_delivered_details.eml").read_text(
+        encoding="utf-8",
+    )
+    mock_imap.fetch.side_effect = _generate_fetch_side_effect(email_file)
+    return mock_imap
