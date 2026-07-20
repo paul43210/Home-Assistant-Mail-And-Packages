@@ -1210,6 +1210,81 @@ async def test_intelcom_dragonfly_delivering(hass):
 
 
 @pytest.mark.asyncio
+async def test_shopify_on_the_way_class(hass, mock_imap_shopify_on_the_way):
+    """Test standard Shopify on-the-way email parsing via GenericShipper."""
+    shipper = GenericShipper(hass, {"image_path": "test/path/"})
+
+    result = await shipper.process(
+        mock_imap_shopify_on_the_way,
+        "today",
+        "shopify_packages",
+    )
+    assert result[ATTR_COUNT] == 1
+    assert result[ATTR_TRACKING] == ["MC1605"]
+
+
+@pytest.mark.asyncio
+async def test_shopify_delivered_class(hass, mock_imap_shopify_delivered):
+    """Test standard Shopify delivered email parsing via GenericShipper."""
+    shipper = GenericShipper(hass, {"image_path": "test/path/"})
+
+    result = await shipper.process(
+        mock_imap_shopify_delivered,
+        "today",
+        "shopify_delivered",
+    )
+    assert result[ATTR_COUNT] == 1
+    assert result[ATTR_TRACKING] == ["53495"]
+
+
+@pytest.mark.parametrize(
+    ("subject", "expected_sensor"),
+    [
+        ("A shipment from order MC1605 is on the way", "shopify_packages"),
+        ("A shipment from order #24498 is on the way", "shopify_packages"),
+        ("A shipment from order BAK(2)-563319 is on the way", "shopify_packages"),
+        ("A shipment from order MC1605 is out for delivery", "shopify_delivering"),
+        ("A shipment from order #53495 has been delivered", "shopify_delivered"),
+        # Non-shipping mail from Shopify's shared senders must not match
+        ("Order #77220 confirmed", None),
+        ("Your GreenPan cart? Saved ✅ over on Shop.", None),
+        ("Customer account confirmation", None),
+    ],
+)
+def test_shopify_subject_patterns(subject, expected_sensor):
+    """Each standard Shopify template subject maps to exactly one sensor."""
+    matched = [
+        sensor
+        for sensor in ("shopify_delivered", "shopify_delivering", "shopify_packages")
+        if any(
+            expected.lower() in subject.lower()
+            for expected in SENSOR_DATA[sensor][ATTR_SUBJECT]
+        )
+    ]
+    if expected_sensor is None:
+        assert matched == []
+    else:
+        assert matched == [expected_sensor]
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("A shipment from order #53495 has been delivered", "53495"),
+        ("A shipment from order MC1605 is on the way", "MC1605"),
+        ("A shipment from order BAK(2)-563319 is on the way", "BAK(2)-563319"),
+        ("A shipment from order PP3024 is on the way", "PP3024"),
+    ],
+)
+def test_shopify_tracking_pattern(text, expected):
+    """The Shopify tracking pattern extracts the order id from the subject."""
+    pattern = SENSOR_DATA["shopify_tracking"]["pattern"][0]
+    match = re.search(pattern, text)
+    assert match is not None
+    assert match.group(1) == expected
+
+
+@pytest.mark.asyncio
 async def test_aliexpress_delivered_2026_format(hass, mock_imap_aliexpress_delivered):
     """Test AliExpress delivered email parsing (2026 subject format)."""
     shipper = GenericShipper(hass, {"image_path": "test/path/"})

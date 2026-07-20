@@ -21,7 +21,7 @@ COORDINATOR = "coordinator_mail"
 OVERLAY = ["overlay.png", "vignette.png", "white.png"]
 SERVICE_UPDATE_FILE_PATH = "update_file_path"
 CAMERA = "cameras"
-CONFIG_VER = 19
+CONFIG_VER = 20
 
 # Attributes
 ATTR_AMAZON_IMAGE = "amazon_image"
@@ -926,6 +926,33 @@ SENSOR_DATA = {
         "subject": ["delivery is delayed"],
     },
     "walmart_tracking": {"pattern": [r"\b#?[0-9]{7}-[0-9]{7,8}\b"]},
+    # Shopify (standard order-notification templates). Sender varies per
+    # store; these cover Shopify's shared sending infrastructure. Stores
+    # sending from their own domain need their sender added here.
+    "shopify_delivered": {
+        "email": [
+            "t.shopifyemail.com",
+            "no-reply@parcelpanel.net",
+        ],
+        "subject": ["has been delivered"],
+    },
+    "shopify_delivering": {
+        "email": [
+            "t.shopifyemail.com",
+            "no-reply@parcelpanel.net",
+        ],
+        "subject": ["is out for delivery"],
+    },
+    "shopify_packages": {
+        "email": [
+            "t.shopifyemail.com",
+            "no-reply@parcelpanel.net",
+        ],
+        "subject": ["is on the way"],
+    },
+    "shopify_tracking": {
+        "pattern": ["shipment from order #?([A-Za-z0-9()\\-]+)"],
+    },
     # BuildingLink
     "buildinglink_delivered": {
         "email": ["notify@buildinglink.com"],
@@ -1603,6 +1630,25 @@ SENSOR_TYPES: Final[dict[str, SensorEntityDescription]] = {
         icon="mdi:archive-alert",
         key="walmart_exception",
     ),
+    # Shopify
+    "shopify_delivered": SensorEntityDescription(
+        name="Mail Shopify Delivered",
+        native_unit_of_measurement="package(s)",
+        icon="mdi:package-variant",
+        key="shopify_delivered",
+    ),
+    "shopify_delivering": SensorEntityDescription(
+        name="Mail Shopify Delivering",
+        native_unit_of_measurement="package(s)",
+        icon="mdi:truck-delivery",
+        key="shopify_delivering",
+    ),
+    "shopify_packages": SensorEntityDescription(
+        name="Mail Shopify Packages",
+        native_unit_of_measurement="package(s)",
+        icon="mdi:package-variant-closed",
+        key="shopify_packages",
+    ),
     # BuildingLink
     "buildinglink_delivered": SensorEntityDescription(
         name="Mail BuildingLink Delivered",
@@ -1888,6 +1934,7 @@ SHIPPERS = [
     "poczta_polska",
     "buildinglink",
     "post_de",
+    "shopify",
 ]
 
 # Authentication types

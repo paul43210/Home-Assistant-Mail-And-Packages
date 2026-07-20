@@ -176,7 +176,7 @@ async def integration_fixture_4(integration_factory, caplog):
     assert "Migrating from version 3" in caplog.text
     assert f"Migration complete to version {CONFIG_VER}" in caplog.text
 
-    assert CONF_AMAZON_DOMAIN in entry.data
+    assert CONF_AMAZON_DOMAIN in entry.options
 
     return entry
 
@@ -1362,6 +1362,30 @@ def mock_imap_list_result_error(mock_imap):
         result="ERROR",
         lines=[b"Could not list folders"],
     )
+    return mock_imap
+
+
+@pytest.fixture
+def mock_imap_shopify_on_the_way(mock_imap):
+    """Mock IMAP search with a standard Shopify on-the-way email."""
+    mock_imap.select.return_value = ("OK", [b""])
+    mock_imap.uid.return_value = MagicMock(result="OK", lines=[b"1"])
+    email_file = Path("tests/test_emails/shopify_on_the_way.eml").read_text(
+        encoding="utf-8",
+    )
+    mock_imap.fetch.side_effect = _generate_fetch_side_effect(email_file)
+    return mock_imap
+
+
+@pytest.fixture
+def mock_imap_shopify_delivered(mock_imap):
+    """Mock IMAP search with a standard Shopify delivered email."""
+    mock_imap.select.return_value = ("OK", [b""])
+    mock_imap.uid.return_value = MagicMock(result="OK", lines=[b"1"])
+    email_file = Path("tests/test_emails/shopify_delivered.eml").read_text(
+        encoding="utf-8",
+    )
+    mock_imap.fetch.side_effect = _generate_fetch_side_effect(email_file)
     return mock_imap
 
 
