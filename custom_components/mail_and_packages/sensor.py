@@ -22,6 +22,7 @@ from .const import (
     AMAZON_HUB,
     AMAZON_HUB_CODE,
     AMAZON_ORDER,
+    AMAZON_ORDER_DETAILS,
     AMAZON_OTP,
     AMAZON_OTP_CODE,
     ATTR_CODE,
@@ -30,6 +31,7 @@ from .const import (
     ATTR_IMAGE_NAME,
     ATTR_IMAGE_PATH,
     ATTR_ORDER,
+    ATTR_ORDER_DETAILS,
     ATTR_TRACKING_NUM,
     ATTR_USPS_IMAGE,
     CONF_PATH,
@@ -174,6 +176,8 @@ class PackagesSensor(CoordinatorEntity, SensorEntity):
                 attr[ATTR_ORDER] = order
         elif order := data.get(AMAZON_ORDER):
             attr[ATTR_ORDER] = order
+            if details := data.get(AMAZON_ORDER_DETAILS):
+                attr[ATTR_ORDER_DETAILS] = details
         elif self.type == AMAZON_HUB:
             if code := data.get(AMAZON_HUB_CODE, data.get(ATTR_CODE)):
                 attr[ATTR_CODE] = code
