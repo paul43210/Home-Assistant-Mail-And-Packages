@@ -26,11 +26,16 @@ from custom_components.mail_and_packages.const import (
     CAMERA_DATA,
     CAMERA_EXTRACTION_CONFIG,
     CONF_FORWARDING_HEADER,
+    ITEM_DETAILS_CONFIG,
     MARKETPLACE_CARRIER_TRACKING,
     SENSOR_DATA,
 )
 from custom_components.mail_and_packages.utils.cache import EmailCache
-from custom_components.mail_and_packages.utils.email import find_text, find_text_matches
+from custom_components.mail_and_packages.utils.email import (
+    extract_item_details,
+    find_text,
+    find_text_matches,
+)
 from custom_components.mail_and_packages.utils.imap import (
     email_fetch,
     email_fetch_headers,
@@ -173,6 +178,9 @@ class GenericShipper(Shipper):
                 sensor_type, found_data, account, cache
             )
         )
+        result.update(
+            await self._collect_item_details(sensor_type, found_data, account, cache)
+        )
 
         if is_delivered:
             result["pre_filtered_tracking"] = result.get(ATTR_TRACKING, [])
@@ -257,7 +265,9 @@ class GenericShipper(Shipper):
                 else sensor_res.get(ATTR_TRACKING)
             )
             for key, value in list(sensor_res.items()):
-                if key.endswith("_carrier_tracking") and isinstance(res.get(key), dict):
+                if key.endswith(("_carrier_tracking", "_order_details")) and isinstance(
+                    res.get(key), dict
+                ):
                     sensor_res[key] = {**res[key], **value}
             res.update(sensor_res)
             # Expose per-sensor raw tracking for coordinator state management.
@@ -429,7 +439,7 @@ class GenericShipper(Shipper):
         found_data = []
         image_found = False
 
-        (server_response, sdata) = await email_search(
+        server_response, sdata = await email_search(
             account=account,
             address=email_addresses,
             date=date,
@@ -669,6 +679,55 @@ class GenericShipper(Shipper):
         if not mapping:
             return {}
         return {f"{prefix}_carrier_tracking": mapping}
+
+    async def _collect_item_details(
+        self,
+        sensor_type: str,
+        found_data: list,
+        account: IMAP4_SSL,
+        cache: EmailCache | None = None,
+    ) -> dict[str, dict]:
+        """Return {<prefix>_order_details: {tracking: name/image}} when configured.
+
+        Fetches are served by the email cache, so this adds no extra IMAP
+        round-trips beyond what tracking extraction already required.
+        """
+        prefix = "_".join(sensor_type.split("_")[:-1])
+        config = ITEM_DETAILS_CONFIG.get(prefix)
+        tracking_key = f"{prefix}_tracking"
+        if (
+            not config
+            or not found_data
+            or tracking_key not in SENSOR_DATA
+            or ATTR_PATTERN not in SENSOR_DATA[tracking_key]
+        ):
+            return {}
+
+        pattern = SENSOR_DATA[tracking_key][ATTR_PATTERN][0]
+        details: dict[str, dict[str, str]] = {}
+        for sdata in found_data:
+            for eid in sdata.split():
+                tracking = await get_tracking(
+                    eid.decode() if isinstance(eid, bytes) else str(eid),
+                    account,
+                    pattern,
+                    cache,
+                )
+                if not tracking:
+                    continue
+                if cache:
+                    msg_parts = (await cache.fetch(eid, "(RFC822)"))[1]
+                else:
+                    msg_parts = (await email_fetch(account, eid, "(RFC822)"))[1]
+                for response_part in msg_parts:
+                    if not isinstance(response_part, (bytes, bytearray)):
+                        continue
+                    msg = email.message_from_bytes(response_part)
+                    if item := extract_item_details(msg, config):
+                        details.setdefault(tracking[0], item)
+        if not details:
+            return {}
+        return {f"{prefix}_order_details": details}
 
     async def _setup_image_extraction(
         self,
