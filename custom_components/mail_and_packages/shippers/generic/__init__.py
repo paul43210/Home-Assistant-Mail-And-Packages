@@ -44,6 +44,9 @@ from .helpers import (
     _collect_carrier_tracking as helper_collect_carrier_tracking,
 )
 from .helpers import (
+    _collect_item_details as helper_collect_item_details,
+)
+from .helpers import (
     _copy_generic_placeholder as helper_copy_generic_placeholder,
 )
 from .helpers import (
@@ -184,6 +187,9 @@ class GenericShipper(GenericBatchMixin, GenericSearchMixin, Shipper):
                 sensor_type, found_data, account, cache
             )
         )
+        result.update(
+            await self._collect_item_details(sensor_type, found_data, account, cache)
+        )
 
         if is_delivered:
             result["pre_filtered_tracking"] = result.get(ATTR_TRACKING, [])
@@ -266,6 +272,18 @@ class GenericShipper(GenericBatchMixin, GenericSearchMixin, Shipper):
     ) -> dict[str, dict]:
         """Map marketplace tracking id -> embedded carrier tracking number."""
         return await helper_collect_carrier_tracking(
+            sensor_type, found_data, account, cache
+        )
+
+    async def _collect_item_details(
+        self,
+        sensor_type: str,
+        found_data: list,
+        account: IMAP4_SSL,
+        cache: EmailCache | None = None,
+    ) -> dict[str, dict]:
+        """Return per-tracking item name/image when the shipper is configured."""
+        return await helper_collect_item_details(
             sensor_type, found_data, account, cache
         )
 

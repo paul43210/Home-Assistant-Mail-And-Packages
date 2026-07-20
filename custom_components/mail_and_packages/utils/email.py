@@ -132,6 +132,34 @@ async def _scan_email_for_text(
     return total_matches, last_value
 
 
+def extract_item_details(
+    msg: email.message.Message,
+    config: dict[str, str],
+) -> dict[str, str] | None:
+    """Extract product name/image from an email's text/html part.
+
+    config holds regexes: "image" (full match) and "name" (group 1),
+    both applied to the raw html.
+    """
+    html = ""
+    try:
+        for part in msg.walk():
+            if part.get_content_type() == "text/html":
+                html = part.get_payload(decode=True).decode("utf-8", "ignore")
+                break
+    except (ValueError, TypeError, AttributeError) as err:
+        _LOGGER.debug("Problem decoding html body: %s", err)
+    if not html:
+        return None
+
+    details = {}
+    if (pattern := config.get("name")) and (found := re.search(pattern, html)):
+        details["name"] = found.group(1).strip()
+    if (pattern := config.get("image")) and (found := re.search(pattern, html)):
+        details["image"] = found.group(0)
+    return details or None
+
+
 async def find_text(
     sdata: Any,
     account: type[IMAP4_SSL],
