@@ -933,6 +933,10 @@ SENSOR_DATA = {
         "email": [
             "t.shopifyemail.com",
             "no-reply@parcelpanel.net",
+            "service@whiskivo.com",
+            "info@extremesnacks.ca",
+            "support@bakven.com",
+            "sales@microcad.ca",
         ],
         "subject": ["has been delivered"],
     },
@@ -940,6 +944,10 @@ SENSOR_DATA = {
         "email": [
             "t.shopifyemail.com",
             "no-reply@parcelpanel.net",
+            "service@whiskivo.com",
+            "info@extremesnacks.ca",
+            "support@bakven.com",
+            "sales@microcad.ca",
         ],
         "subject": ["is out for delivery"],
     },
@@ -947,6 +955,10 @@ SENSOR_DATA = {
         "email": [
             "t.shopifyemail.com",
             "no-reply@parcelpanel.net",
+            "service@whiskivo.com",
+            "info@extremesnacks.ca",
+            "support@bakven.com",
+            "sales@microcad.ca",
         ],
         "subject": ["is on the way"],
     },
