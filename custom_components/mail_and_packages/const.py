@@ -876,6 +876,31 @@ SENSOR_DATA = {
     "intelcom_tracking": {
         "pattern": ["(NSPRSO[0-9]{10}|AMZNL[0-9]{12}|INTLCMI[0-9]+)"]
     },
+    # UniUni
+    #
+    # Deliberately delivering-only. As of 2026-08-01 exactly one UniUni email
+    # has ever been received, so there is no sample of a "delivered" or a
+    # "picked up" notice — it is not even established that UniUni sends them.
+    # Registering those states with empty subject lists would degrade the IMAP
+    # query to sender + date and count every UniUni email as delivered, so they
+    # are omitted entirely until real samples exist.
+    #
+    # The subject header on the observed email is French-only; the English
+    # string lives in the body. Both are listed because SUBJECT matching is a
+    # substring test and UniUni may send English-header mail to other accounts.
+    # The French string is also a tail of Purolator's 2026 subject, which is
+    # harmless: build_search() ANDs the address clause with the subject clause,
+    # so scoping to noreply@uniuni.com keeps the two apart.
+    "uniuni_delivering": {
+        "email": ["noreply@uniuni.com"],
+        "subject": [
+            "Votre colis est en cours de livraison",
+            "Your package is out for delivery",
+        ],
+    },
+    # Derived from a single observed number (JY26CAA0U051706106). Anchored on
+    # the "JY" prefix with a fixed 16-char tail; widen once more samples exist.
+    "uniuni_tracking": {"pattern": ["JY[0-9A-Z]{16}"]},
     # Etsy
     "etsy_delivered": {
         "email": [
@@ -1783,6 +1808,13 @@ SENSOR_TYPES: Final[dict[str, SensorEntityDescription]] = {
         icon="mdi:package-variant-closed",
         key="intelcom_packages",
     ),
+    # UniUni — delivering only; see the SENSOR_DATA comment above.
+    "uniuni_delivering": SensorEntityDescription(
+        name="Mail UniUni Delivering",
+        native_unit_of_measurement="package(s)",
+        icon="mdi:truck-delivery",
+        key="uniuni_delivering",
+    ),
     # Walmart
     "walmart_delivering": SensorEntityDescription(
         name="Mail Walmart Delivering",
@@ -2294,6 +2326,7 @@ SHIPPERS = [
     "bonshaw_distribution_network",
     "purolator",
     "intelcom",
+    "uniuni",
     "etsy",
     "post_nl",
     "post_at",

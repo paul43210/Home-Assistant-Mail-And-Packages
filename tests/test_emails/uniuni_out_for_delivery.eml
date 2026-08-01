@@ -1,0 +1,37 @@
+Delivered-To: redacted@gmail.com
+Received: from mta1.uniuni.com (mta1.uniuni.com. [192.0.2.20])
+        by mx.google.com with ESMTPS id uni456def789
+        for <redacted@gmail.com>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256/256);
+        Sat, 18 Jul 2026 04:04:53 -0700 (PDT)
+Return-Path: <noreply@uniuni.com>
+From: UniUni <noreply@uniuni.com>
+To: redacted@gmail.com
+Subject: Votre colis est en cours de livraison
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<!doctype html>
+<html>
+<body>
+<div>
+  <div>Votre colis est en cours de livraison</div>
+  <div>Bonjour Redacted Recipient,</div>
+  <div>Un chauffeur d=E2=80=99UniUni livrera votre colis d=E2=80=99ici les 24=
+ prochaines heures</div>
+  <div>Your package is out for delivery</div>
+  <div>Hello Redacted Recipient,</div>
+  <div>Your package is on the way! A UniUni Driver will deliver your package =
+within 24 hours.</div>
+  <a href=3D"https://example.invalid/track">Track My Package / Suivre Mon Col=
+is</a>
+  <div>Package tracking number/Votre num=C3=A9ro de suivi de colis : <span>JY=
+26CAA0U051706106</span></div>
+  <div>Delivery Address/ Adresse de livraison:</div>
+  <div>Redacted Recipient <br> 123 Example St <br> Ottawa ON <br> A1A 1A1 <br=
+> Canada</div>
+  <div>Thank you and have a great day! Merci et bonne journ=C3=A9e.</div>
+</div>
+</body>
+</html>

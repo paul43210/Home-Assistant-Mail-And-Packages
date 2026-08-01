@@ -15,6 +15,7 @@ from custom_components.mail_and_packages.const import (
     CONF_FORWARDING_HEADER,
     ITEM_DETAILS_CONFIG,
     SENSOR_DATA,
+    SENSOR_TYPES,
 )
 from custom_components.mail_and_packages.shippers import generic
 from custom_components.mail_and_packages.shippers.generic import GenericShipper
@@ -1345,6 +1346,52 @@ async def test_purolator_shipment_out_for_delivery_2026_format(
     )
     assert result[ATTR_COUNT] == 1
     assert result[ATTR_TRACKING] == ["RKP000051945"]
+
+
+@pytest.mark.asyncio
+async def test_uniuni_out_for_delivery(hass, mock_imap_uniuni_out_for_delivery):
+    """Test UniUni out-for-delivery email parsing (bilingual FR/EN)."""
+    shipper = GenericShipper(hass, {"image_path": "test/path/"})
+
+    result = await shipper.process(
+        mock_imap_uniuni_out_for_delivery,
+        "today",
+        "uniuni_delivering",
+    )
+    assert result[ATTR_COUNT] == 1
+    assert result[ATTR_TRACKING] == ["JY26CAA0U051706106"]
+
+
+def test_uniuni_tracking_pattern():
+    """The UniUni tracking pattern extracts the observed number format."""
+    pattern = SENSOR_DATA["uniuni_tracking"]["pattern"][0]
+    match = re.search(pattern, "colis : JY26CAA0U051706106")
+    assert match is not None
+    assert match.group(0) == "JY26CAA0U051706106"
+
+
+def test_uniuni_is_delivering_only():
+    """UniUni intentionally registers no delivered/packages state.
+
+    Only one UniUni email has ever been observed (out-for-delivery), so there
+    is no evidence for the other states. Registering them with empty subject
+    lists would reduce the IMAP query to sender + date and miscount every
+    UniUni email. Remove this test only alongside real sample emails.
+    """
+    assert "uniuni_delivering" in SENSOR_DATA
+    for absent in ("uniuni_delivered", "uniuni_packages"):
+        assert absent not in SENSOR_DATA
+        assert absent not in SENSOR_TYPES
+
+
+def test_uniuni_subject_does_not_collide_with_purolator():
+    """UniUni's French subject is a tail of Purolator's, but FROM disambiguates."""
+    shared = "Votre colis est en cours de livraison"
+    assert shared in SENSOR_DATA["uniuni_delivering"]["subject"]
+
+    uniuni_senders = set(SENSOR_DATA["uniuni_delivering"]["email"])
+    purolator_senders = set(SENSOR_DATA["purolator_delivering"]["email"])
+    assert not uniuni_senders & purolator_senders
 
 
 @pytest.mark.asyncio
