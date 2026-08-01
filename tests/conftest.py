@@ -1466,6 +1466,18 @@ def mock_imap_purolator_shipment_out_for_delivery(mock_imap):
 
 
 @pytest.fixture
+def mock_imap_uniuni_out_for_delivery(mock_imap):
+    """Mock IMAP search with UniUni out-for-delivery email (bilingual FR/EN)."""
+    mock_imap.select.return_value = ("OK", [b""])
+    mock_imap.uid.return_value = MagicMock(result="OK", lines=[b"1"])
+    email_file = Path(
+        "tests/test_emails/uniuni_out_for_delivery.eml",
+    ).read_text(encoding="utf-8")
+    mock_imap.fetch.side_effect = _generate_fetch_side_effect(email_file)
+    return mock_imap
+
+
+@pytest.fixture
 def mock_imap_etsy_delivered(mock_imap):
     """Mock IMAP search with Etsy delivered email."""
     mock_imap.select.return_value = ("OK", [b""])
