@@ -590,15 +590,12 @@ def test_amazon_date_regex_fr():
     assert amazon_date_regex("Arrivée prévue aujourd'hui") == "aujourd'hui"
 
 
-    assert "Amazon image exceeds size limit after download" in caplog.text
-
-
 def test_extract_amazon_order_details():
     """Item names and product image are extracted from a shipping email."""
     raw = Path("tests/test_emails/amazon_shipped_details.eml").read_bytes()
     msg = email.message_from_bytes(raw)
     body = get_email_body(msg)
-    subject = "Shipped: “OLSA Giant Tumble Tower,...”"
+    subject = "Shipped: \u201cOLSA Giant Tumble Tower,...\u201d"
 
     details = extract_amazon_order_details(subject, body, msg)
     assert details is not None
