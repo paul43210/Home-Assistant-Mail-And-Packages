@@ -439,7 +439,7 @@ class GenericShipper(Shipper):
         found_data = []
         image_found = False
 
-        server_response, sdata = await email_search(
+        (server_response, sdata) = await email_search(
             account=account,
             address=email_addresses,
             date=date,
